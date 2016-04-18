@@ -1,0 +1,4 @@
+file db/dbac.db {
+    pattern { user, DayCounts, HighTmp, LowTmp, R, pt, db }
+        { "ac", 1440, 35, 20, 0.05, 26, 1}
+}

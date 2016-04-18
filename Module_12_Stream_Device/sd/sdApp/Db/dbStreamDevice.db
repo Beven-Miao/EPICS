@@ -1,0 +1,6 @@
+record(stringin, "sd")
+{
+	field(DTYP, "stream")
+	field(SCAN, "5 second")
+	field(INP, "@sd.proto getTime PS0")
+}

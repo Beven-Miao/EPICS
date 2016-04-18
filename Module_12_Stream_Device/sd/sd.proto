@@ -1,0 +1,6 @@
+Terminator = CR LF;
+
+getTime{
+	out "time";
+	in "%s";
+}

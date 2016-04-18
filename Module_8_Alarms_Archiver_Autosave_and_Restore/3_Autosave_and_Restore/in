@@ -1,0 +1,7 @@
+data {
+	ac:idt
+	ac:odt
+	ac:power
+	ac:aiMode
+	ac:aiPower
+}

@@ -1,0 +1,61 @@
+record(calc, "$(user):time")
+{
+	field(SCAN, "1 second")
+	field(FLNK, "$(user):outdoortemp")
+	field(CALC, "(A<B)?(A+C):D")
+	field(INPA, "$(user):time.VAL NPP NMS")
+	field(INPB, "$(DayCounts)")
+	field(INPC, "1")
+	field(INPD, "0")
+}
+
+record(calc, "$(user):outdoortemp")
+{
+	alias("$(user):odt")
+	field(CALC, "(B-C)*SIN(PI*A/D)+C")
+	field(INPA, "$(user):time")
+	field(INPB, "$(HighTmp)")
+	field(INPC, "$(LowTmp)")
+	field(INPD, "$(DayCounts)")
+}
+
+record(ai, "$(user):insul")
+{
+	field(VAL, "$(R)")
+}
+
+record(calc, "$(user):indoortemp")
+{
+	alias("$(user):idt")
+}
+
+record(ai, "$(user):pretemp")
+{
+	alias("$(user):pt")
+	field(VAL, "$(pt)")
+}
+
+record(ai, "$(user):deadband")
+{
+	field(VAL, "$(db)")
+}
+
+record(calc, "$(user):autoswitch")
+{
+
+}
+
+record(ai, "$(user):manulswitch")
+{
+
+}
+
+record(calc, "$(user):mode")
+{
+
+}
+
+record(calc, "$(user):power")
+{
+
+}

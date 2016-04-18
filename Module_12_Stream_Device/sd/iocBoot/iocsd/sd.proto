@@ -1,0 +1,5 @@
+
+getTime{
+	out "time\r\n";
+	in "%#s";
+}

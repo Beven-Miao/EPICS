@@ -1,0 +1,140 @@
+record(calc, "$(user):calcTime")
+{
+	field(DESC, "Time counter")
+	field(SCAN,".1 second")
+	field(FLNK, "$(user):calcInDoorTmp")
+	field(CALC, "(A<B)?(A+C):D")
+	field(INPA, "$(user):calcTime.VAL NPP NMS")
+	field(INPB, "1200")
+	field(INPC, "1")
+	field(INPD, "0")
+	field(EGU, "Counts")
+	field(HOPR, "1200")
+	field(LOPR, "0")
+}
+record(calc, "$(user):calcOutDoorTmp")
+{
+	alias("$(user):odt")
+	field(DESC, "Out Door Temperature")
+	field(FLNK, "$(user):calcAirCondCore")
+	field(CALC, "(B-C)*SIN(PI*A/1200)+C")
+	field(INPA, "$(user):calcTime.VAL NPP NMS")
+	field(INPB, "$(HighTmp)")
+	field(INPC, "$(LowTmp)")
+	field(EGU, "Counts")
+	field(HOPR, "50")
+	field(HIHI, "40")
+	field(HIGH, "30")
+	field(LOW, "10")
+	field(LOLO, "0")
+	field(HHSV, "MAJOR")
+	field(HSV, "MINOR")
+	field(LSV, "MINOR")
+	field(LLSV, "MAJOR")
+}
+record(calc, "$(user):calcInDoorTmp")
+{
+        alias("$(user):idt")
+        field(DESC, "Indoor Temperature")
+        field(FLNK, "$(user):calcOutDoorTmp")
+        field(CALC, "C+(A-C)*B+D")
+        field(INPA, "$(user):calcOutDoorTmp.VAL NPP NMS")
+        field(INPB, "$(InsulCoeff)")
+        field(INPC, "$(user):calcInDoorTmp.VAL NPP NMS")
+        field(INPD, "$(user):calcAirCondCore.VAL NPP NMS")
+        field(EGU, "Counts")
+        field(HOPR, "50")
+        field(HIHI, "40")
+        field(HIGH, "30")
+        field(LOW, "10")
+        field(LOLO, "0")
+        field(HHSV, "MAJOR")
+        field(HSV, "MINOR")
+        field(LSV, "MINOR")
+        field(LLSV, "MAJOR")
+	field(VAL, "$(PreSetTmp)")
+}
+record(ai, "$(user):aiPreSetTmp")
+{
+	field(DESC, "Pre set temperature")
+	field(INP, "$(PreSetTmp)")
+}
+record(ai, "$(user):aiDeadBand")
+{
+	field(DESC, "deadband around PreSetTmp")
+	field(INP, "$(DeadBand)")
+}
+# 1 -> heat; 0 -> off; -1 -> cool.
+# 2/4/2015 revise deadband to prevent autoswitching too frequently
+# auto: last state of autoswitcher; idt: indoor temp; preT: PreSetTmp; dT: deadband.
+# States and Output list:
+#  auto |      idt      |  output
+# -------------------------------
+#  -1   |    > preT     |    -1
+#  -1   |   <= preT     |     0
+# -------------------------------
+#   0   | > (preT + dT) |    -1
+#   0   | > (preT - dT) |     1
+#   0   |   otherwise   |     0
+# -------------------------------
+#   1   |    < preT     |     1
+#   1   |   >= preT     |     0
+# -------------------------------
+record(calc, "$(user):calcAutoSwitch")
+{
+	field(DESC, "Auto AC switcher")
+#	field(CALC, "(A-B)>C?-1:((B-A)>C?1:0)")
+	field(CALC, "D=-1?(A>B?-1:0):(D=1?(A<B?1:0):(A>(B+C)?-1:(A<(B-C)?1:0)))")
+	field(INPA, "$(user):calcInDoorTmp.VAL NPP NMS")
+	field(INPB, "$(user):aiPreSetTmp.VAL PP NMS")
+	field(INPC, "$(user):aiDeadBand.VAL PP NMS")
+	field(INPD, "$(user):calcAutoSwitch.VAL NPP NMS")
+}
+record(calc, "$(user):calcAirCondCore")
+{
+	field(DESC, "Air condition core")
+	field(CALC, "C>1?A*B:A*C")
+	field(INPA, "$(user):calcPowerLimit.VAL PP NMS")
+	field(INPB, "$(user):calcAutoSwitch.VAL PP NMS")
+	field(INPC, "$(user):aiMode.VAL PP NMS")
+}
+record(ai, "$(user):aiPower")
+{
+	field(DESC, "Variable A/C Power")
+	field(INP, "$(InitPower)")
+}
+# 1. Manually power setting considered; 2. Dynamic power adjustment provided
+# When manual-set power > 0, use it; otherwise use dynamic power.
+# Dynamic power considerations:
+#	1) The greater gap between PreSetTmp and IndoorTmp is, the larger A/C power should be.
+#       2) No matter how close the PreSetTmp and IndoorTmp is, the A/C should defeat the outdoor environment.
+record(calc, "$(user):calcPower")
+{
+        alias("$(user):power")
+	field(DESC, "Dynamic adjustment of A/C power")
+	field(CALC,"E>0?E:ABS((A-C)*B+(C-D)*(1+F/ABS(C-D))*0.08)")
+        field(INPA, "$(user):calcOutDoorTmp.VAL NPP NMS")
+        field(INPB, "$(InsulCoeff)")
+        field(INPC, "$(user):calcInDoorTmp.VAL NPP NMS")
+        field(INPD, "$(user):aiPreSetTmp.VAL NPP NMS")
+	field(INPE, "$(user):aiPower PP NMS")
+        field(INPF, "$(user):aiDeadBand.VAL PP NMS")
+        field(HIHI, "0.45")
+        field(HIGH, "0.41")
+        field(HHSV, "MAJOR")
+        field(HSV, "MINOR")
+}
+record(calc, "$(user):calcPowerLimit")
+{
+	field(DESC, "Limit Power up to MaxPower")
+	field(CALC,"B>A?A:(B<0.1?0.1:B)")
+	field(INPA, "$(MaxPower)")
+	field(INPB, "$(user):calcPower.VAL PP NMS")
+}
+## aiMode: 2 -> manul mode off; 0 -> manul off;
+#         -1 -> manul cool on;  1 -> manul heat on.
+record(ai, "$(user):aiMode")
+{
+	field(DESC,"Manully A/C mode controler")
+	field(VAL, "0")
+}

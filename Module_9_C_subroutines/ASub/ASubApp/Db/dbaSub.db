@@ -1,0 +1,60 @@
+record(waveform, "PosA"){
+	field(INP, "0")
+	field(NELM, "3")
+	field(FTVL, "FLOAT")
+	field(FLNK, "MassCenterCalc")
+}
+
+record(waveform, "PosB"){
+	field(INP, "0")
+	field(NELM, "3")
+	field(FTVL, "FLOAT")
+	field(FLNK, "MassCenterCalc")
+}
+
+record(ai, "MassA"){
+	field(VAL, "1")
+	field(FLNK, "MassCenterCalc")
+}
+
+record(ai, "MassB"){
+	field(VAL, "2")
+	field(FLNK, "MassCenterCalc")
+}
+
+record(waveform, "MassCenter"){
+	field(INP, "0")
+	field(NELM, "3")
+	field(FTVL, "FLOAT")
+}
+
+record(aSub, "MassCenterCalc"){
+	field(SNAM, "calc_mass_center")
+	# field(SCAN, "1 second")
+	
+	# Coordinates of Point A
+	field(FTA, "FLOAT")
+	field(NOA, "3")
+	field(INPA,"PosA NPP NMS")
+
+	# Coordinates of Point B
+	field(FTB, "FLOAT")
+	field(NOB, "3")
+	field(INPB, "PosB NPP NMS")
+
+	# Mass of Point A
+	field(FTC, "FLOAT")
+	field(NOC, "1")
+	field(INPC, "MassA NPP NMS")
+
+	# Mass of Point B
+	field(FTD, "FLOAT")
+	field(NOD, "1")
+	field(INPD, "MassB NPP NMS")
+
+	# Coordinates of the center of mass
+	field(FTVA, "FLOAT")
+	field(NOVA, "3")
+	field(OUTA, "MassCenter PP NMS")	
+	
+}

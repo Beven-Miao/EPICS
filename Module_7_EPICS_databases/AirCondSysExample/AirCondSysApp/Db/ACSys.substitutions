@@ -1,0 +1,5 @@
+# Air Conditioning System substitutions file
+
+file "db/dbAirCondSys.db" {
+    { user = "codac-dev", InsulCoeff = 0.8, BaseTmp = 25, HighTmp = 10, LowTmp = 0 }
+}

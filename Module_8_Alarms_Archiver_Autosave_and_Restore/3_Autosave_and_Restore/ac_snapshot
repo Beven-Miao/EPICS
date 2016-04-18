@@ -1,0 +1,18 @@
+env{
+Logonid{"codac-dev (CODAC Core System Developer)"}
+SnapType{Absolute}
+TimeStamp{"Tue Jun 30 02:58:31 2015 "}
+Time{1435625911}
+LocalDTime{025831}
+LocalJDate{15181}
+GmtDTime{005831}
+GmtJDate{15181}
+InputFile{"/home/codac-dev/EPICS_Academy/Module_8_Alarms_Archiver_Autosave_and_Restore/3_Autosave_and_Restore/in"}
+}
+data{
+  ac:idt{value{data{44.2837682822645}} sevr{MAJOR} stat{HIHI}}
+  ac:odt{value{data{42.0296752830706}} sevr{MAJOR} stat{HIHI}}
+  ac:power{value{data{0.4}} sevr{NO_ALARM}}
+  ac:aiMode{value{data{2}} sevr{NO_ALARM}}
+  ac:aiPower{value{data{0}} sevr{NO_ALARM}}
+}

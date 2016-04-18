@@ -1,0 +1,488 @@
+program acsnc 
+
+int t;
+assign t to "{user}:time";
+monitor t;
+
+double odt;
+assign odt to "{user}:outdoortemp";
+
+double idt;
+assign idt to "{user}:indoortemp";
+
+double R;
+assign R to "{user}:insul";
+
+double pt;
+assign pt to "{user}:pretemp";
+
+double dT;
+assign dT to "{user}:deadband";
+
+int autos;
+assign autos to "{user}:autoswitch";
+
+int manul;
+assign manul to "{user}:manulswitch";
+
+int mode;
+assign mode to "{user}:mode";
+
+double p;
+assign p to "{user}:power";
+
+double pmax = 2;
+double pmin = 0.5;
+double dt;
+int autostmp;
+int st;
+int t_now;
+int DayCounts = 1440;
+
+ss ac {
+    state init {
+	when (pvConnectCount() == pvChannelCount()) {
+	    printf("All channels connectedly\n");
+	    pvGet(R);
+	    pvGet(pt);
+	    pvGet(dT);
+	    pvGet(odt);
+	    
+	    p = 0;
+	    mode = 0;
+	    manul = 2;
+	    idt = odt;
+	    t_now = t;
+
+	    dt = pt - idt;
+	    if (dt > dT) {
+	    	autos = 1;	
+	    }
+	    else if (dt < -dT) {
+	   	autos = -1;
+	    }
+	    else {
+		autos = 0;
+	    }
+	
+	    pvPut(p);
+	    pvPut(mode);
+	    pvPut(manul);
+	    pvPut(idt);
+	    pvPut(autos);
+	    printf("%d\n", st);
+	} state off
+
+	when (delay(5.0)) {
+	    printf("...waiting\n");
+	} state init
+    }
+    
+    state off {
+	when(t-t_now == 1 ||t-t_now < 0){
+	    t_now = t;
+	    pvGet(manul);
+       	    pvGet(autos);
+	    pvGet(odt);
+	    pvGet(idt);
+	    pvGet(pt);
+	    pvGet(R);
+	    pvGet(dT);	
+
+            dt = pt - idt;
+            if (dt > dT) {
+                autostmp = 1;
+            }  
+            else if (dt < -dT) {
+                autostmp = -1;
+            }
+            else {
+                autostmp = 0;
+            }
+
+	    if(manul == 0 || (manul == 2 && autos == 0)){
+		mode = 0;
+		p = 0;
+		st = 0;
+	    }
+	    
+	    if(manul == -1){
+		mode = -1;
+		p = 0.8 * pmax;
+		st = -2;
+	    }
+
+	    if(manul == 2 && autos == -1){
+		mode = -1;
+		p = (pmax - pmin) * (-dt) / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -1;
+	    }
+
+	    if(manul == 1){
+		mode = 1;
+		p = 0.8 * pmax;
+		st = 2;
+	    }
+
+	    if(manul == 2 && autos == 1){
+		mode = 1;
+		p = (pmax - pmin) * dt / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -2;
+	    }
+
+
+
+	    idt = idt + R * (odt - idt) + p * mode;
+	    autos = autostmp;
+
+	    pvPut(mode);
+	    pvPut(p);
+	    pvPut(idt);
+	    pvPut(autos);
+	} state off
+	
+	when (st == -2) {
+	    printf("%d\n", st);
+	} state manulcool
+
+	when (st == -1) {
+	    printf("%d\n", st);
+	} state autoscool
+	
+	when (st == 2) {
+	    printf("%d\n", st);
+	} state manulheat
+
+	when (st == 1) {
+	    printf("%d\n", st);
+	} state autosheat
+    }
+
+    state manulcool {
+	when(t-t_now == 1 ||t-t_now < 0) {
+	    t_now = t;
+	    pvGet(manul);
+       	    pvGet(autos);
+	    pvGet(odt);
+	    pvGet(idt);
+	    pvGet(pt);
+	    pvGet(R);
+	    pvGet(dT);	
+
+            dt = pt - idt;
+            if (dt > dT) {
+                autostmp = 1;
+            }  
+            else if (dt < 0) {
+                autostmp = -1;
+            }
+            else {
+                autostmp = 0;
+            }
+
+	    if(manul == 0 || (manul == 2 && autos == 0)){
+		mode = 0;
+		p = 0;
+		st = 0;
+	    }
+	    
+	    if(manul == -1){
+		mode = -1;
+		p = 0.8 * pmax;
+		st = -2;
+	    }
+
+	    if(manul == 2 && autos == -1){
+		mode = -1;
+		p = (pmax - pmin) * (-dt) / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -1;
+	    }
+
+	    if(manul == 1){
+		mode = 1;
+		p = 0.8 * pmax;
+		st = 2;
+	    }
+
+	    if(manul == 2 && autos == 1){
+		mode = 1;
+		p = (pmax - pmin) * dt / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -2;
+	    }
+
+
+
+	    idt = idt + R * (odt - idt) + p * mode;
+	    autos = autostmp;
+
+	    pvPut(mode);
+	    pvPut(p);
+	    pvPut(idt);
+	    pvPut(autos);
+	}  state manulcool
+	
+	when (st == 0) {
+	    printf("%d\n", st);
+	} state off
+	
+	when (st == -1) {
+	    printf("%d\n", st);
+	} state autoscool
+	
+	when (st == 2) {
+	    printf("%d\n", st);
+	} state manulheat
+
+	when (st == 1) {
+	    printf("%d\n", st);
+	} state autosheat
+    }
+
+    state autoscool {
+	when(t-t_now == 1 ||t-t_now < 0) {
+	    t_now = t;
+	    pvGet(manul);
+       	    pvGet(autos);
+	    pvGet(odt);
+	    pvGet(idt);
+	    pvGet(pt);
+	    pvGet(R);
+	    pvGet(dT);	
+
+            dt = pt - idt;
+            if (dt > dT) {
+                autostmp = 1;
+            }  
+            else if (dt < 0) {
+                autostmp = -1;
+            }
+            else {
+                autostmp = 0;
+            }
+
+	    if(manul == 0 || (manul == 2 && autos == 0)){
+		mode = 0;
+		p = 0;
+		st = 0;
+	    }
+	    
+	    if(manul == -1){
+		mode = -1;
+		p = 0.8 * pmax;
+		st = -2;
+	    }
+
+	    if(manul == 2 && autos == -1){
+		mode = -1;
+		p = (pmax - pmin) * (-dt) / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -1;
+	    }
+
+	    if(manul == 1){
+		mode = 1;
+		p = 0.8 * pmax;
+		st = 2;
+	    }
+
+	    if(manul == 2 && autos == 1){
+		mode = 1;
+		p = (pmax - pmin) * dt / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -2;
+	    }
+
+	    idt = idt + R * (odt - idt) + p * mode;
+	    autos = autostmp;
+
+	    pvPut(mode);
+	    pvPut(p);
+	    pvPut(idt);
+	    pvPut(autos);
+	}  state autoscool
+	
+	when (st == 0) {
+	    printf("%d\n", st);
+	} state off
+	
+	when (st == -2) {
+	    printf("%d\n", st);
+	} state manulcool
+
+	when (st == 2) {
+	    printf("%d\n", st);
+	} state manulheat
+
+	when (st == 1) {
+	    printf("%d\n", st);
+	} state autosheat
+    }
+
+    state manulheat {
+	when(t-t_now == 1 ||t-t_now < 0) {
+	    t_now = t;
+	    pvGet(manul);
+       	    pvGet(autos);
+	    pvGet(odt);
+	    pvGet(idt);
+	    pvGet(pt);
+	    pvGet(R);
+	    pvGet(dT);	
+
+            dt = pt - idt;
+            if (dt > 0) {
+                autostmp = 1;
+            }  
+            else if (dt < -dT) {
+                autostmp = -1;
+            }
+            else {
+                autostmp = 0;
+            }
+
+	    if(manul == 0 || (manul == 2 && autos == 0)){
+		mode = 0;
+		p = 0;
+		st = 0;
+	    }
+	    
+	    if(manul == -1){
+		mode = -1;
+		p = 0.8 * pmax;
+		st = -2;
+	    }
+
+	    if(manul == 2 && autos == -1){
+		mode = -1;
+		p = (pmax - pmin) * (-dt) / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -1;
+	    }
+
+	    if(manul == 1){
+		mode = 1;
+		p = 0.8 * pmax;
+		st = 2;
+	    }
+
+	    if(manul == 2 && autos == 1){
+		mode = 1;
+		p = (pmax - pmin) * dt / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -2;
+	    }
+
+
+
+	    idt = idt + R * (odt - idt) + p * mode;
+	    autos = autostmp;
+
+	    pvPut(mode);
+	    pvPut(p);
+	    pvPut(idt);
+	    pvPut(autos);
+	}  state manulheat
+	
+	when (st == 0) {
+	    printf("%d\n", st);
+	} state off
+	
+	when (st == -2) {
+	    printf("%d\n", st);
+	} state manulcool
+
+	when (st == -1) {
+	    printf("%d\n", st);
+	} state autoscool
+	
+	when (st == 1) {
+	    printf("%d\n", st);
+	} state autosheat
+    }
+
+    state autosheat {
+	when(t-t_now == 1 ||t-t_now < 0) {
+	    t_now = t;
+	    pvGet(manul);
+       	    pvGet(autos);
+	    pvGet(odt);
+	    pvGet(idt);
+	    pvGet(pt);
+	    pvGet(R);
+	    pvGet(dT);	
+
+            dt = pt - idt;
+            if (dt > 0) {
+                autostmp = 1;
+            }  
+            else if (dt < -dT) {
+                autostmp = -1;
+            }
+            else {
+                autostmp = 0;
+            }
+
+	    if(manul == 0 || (manul == 2 && autos == 0)){
+		mode = 0;
+		p = 0;
+		st = 0;
+	    }
+	    
+	    if(manul == -1){
+		mode = -1;
+		p = 0.8 * pmax;
+		st = -2;
+	    }
+
+	    if(manul == 2 && autos == -1){
+		mode = -1;
+		p = (pmax - pmin) * (-dt) / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -1;
+	    }
+
+	    if(manul == 1){
+		mode = 1;
+		p = 0.8 * pmax;
+		st = 2;
+	    }
+
+	    if(manul == 2 && autos == 1){
+		mode = 1;
+		p = (pmax - pmin) * dt / 20 + pmin;
+		if(p > pmax) p = pmax;
+		st = -2;
+	    }
+
+
+
+	    idt = idt + R * (odt - idt) + p * mode;
+	    autos = autostmp;
+
+	    pvPut(mode);
+	    pvPut(p);
+	    pvPut(idt);
+	    pvPut(autos);
+	}  state autosheat
+	
+	when (st == 0) {
+	    printf("%d\n", st);
+	} state off
+	
+	when (st == -2) {
+	    printf("%d\n", st);
+	} state manulcool
+
+	when (st == -1) {
+	    printf("%d\n", st);
+	} state autoscool
+	
+	when (st == 2) {
+	    printf("%d\n", st);
+	} state manulheat
+    }
+}

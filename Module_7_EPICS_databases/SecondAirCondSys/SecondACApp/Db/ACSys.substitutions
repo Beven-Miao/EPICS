@@ -1,0 +1,6 @@
+# Air Conditioning System substitutions file
+
+file "db/dbAirCondSys.db" {
+    { user = "codac-dev", InsulCoeff = 0.02, HighTmp = 30, LowTmp = 25, PreSetTmp = 22, DeadBand = 1, InitPower = 0.2, MaxPower = 0.5 }
+    { user = "ac", InsulCoeff = 0.02, HighTmp = 10, LowTmp = 0, PreSetTmp = 25, DeadBand = 1, InitPower = 0.4, MaxPower = 0.5 }
+}

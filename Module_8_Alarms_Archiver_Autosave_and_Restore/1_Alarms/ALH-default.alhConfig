@@ -1,0 +1,8 @@
+GROUP NULL AirCond
+
+GROUP AirCond Temp
+CHANNEL Temp ac:odt
+CHANNEL Temp ac:idt
+
+GROUP AirCond Power
+CHANNEL Power ac:power

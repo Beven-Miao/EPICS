@@ -1,0 +1,11 @@
+record(longin, "li_1s")
+{
+	field(DTYP, "LongIn")
+	field(SCAN, "1 second")
+}
+
+record(longin, "li_5s")
+{
+	field(DTYP, "LongIn")
+	field(SCAN, "5 second")
+}
